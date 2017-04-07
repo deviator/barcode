@@ -15,12 +15,11 @@ import barcode.util;
 ///
 class Code128 : BarCodeEncoder1D
 {
-    enum stopSymbol = 0b1100011101011;
+    enum stopSymbol = bits!"##---###-#-##";
 
     this(bool appendCheckSum=false)
     {
         this.appendCheckSum = appendCheckSum;
-
     }
 
     bool appendCheckSum;
@@ -33,6 +32,7 @@ class Code128 : BarCodeEncoder1D
 
 private:
 
+Sym symByNum(size_t num) { return src_table[num]; }
 Sym symByA(string str) { return src_table[sym_by_a[str]]; }
 Sym symByB(string str) { return src_table[sym_by_b[str]]; }
 Sym symByC(string str) { return src_table[sym_by_c[str]]; }
@@ -40,6 +40,64 @@ Sym symByC(string str) { return src_table[sym_by_c[str]]; }
 enum size_t[string] sym_by_a = src_table.getDict!((i,v) => tuple(v.A, i));
 enum size_t[string] sym_by_b = src_table.getDict!((i,v) => tuple(v.B, i));
 enum size_t[string] sym_by_c = src_table.getDict!((i,v) => tuple(v.C, i));
+
+Sym calcCheckSumm(Sym[] symbol)
+{
+    enforce(symbol.length >= 1);
+
+    size_t tmp = symbol[0].num;
+    foreach(i, sym; symbol)
+        tmp += sym.num * i; // first in tmp yet
+    tmp %= 103;
+    return symByNum(tmp);
+}
+
+unittest
+{
+    auto arr = [StartB, "A", "I", "M", CODE_C, "12", "34"];
+    assert(calcCheckSumm(getSymbols(arr)).num == 87);
+}
+
+Sym[] getSymbols(string[] arr...)
+{
+    enum State { A,B,C }
+    State curr;
+    switch (arr[0])
+    {
+        case StartA: curr = State.A; break;
+        case StartB: curr = State.B; break;
+        case StartC: curr = State.C; break;
+        default: throw new Exception("arr mush starts from StartX symbol");
+    }
+    bool shift;
+    Sym symByCurr(string v)
+    {
+        final switch (curr)
+        {
+            case State.A: return shift ? symByB(v) : symByA(v);
+            case State.B: return shift ? symByA(v) : symByB(v);
+            case State.C: return symByC(v);
+        }
+    }
+
+    Sym[] ret = [symByA(arr[0])];
+
+    foreach (v; arr[1..$])
+    {
+        ret ~= symByCurr(v);
+        shift = false;
+        switch (v)
+        {
+            case CODE_A: curr = State.A; break;
+            case CODE_B: curr = State.B; break;
+            case CODE_C: curr = State.C; break;
+            case Shift: shift = true; break;
+            default: break;
+        }
+    }
+
+    return ret;
+}
 
 struct Sym
 {
@@ -59,7 +117,7 @@ struct Sym
 auto setNum(Sym[] tbl) { foreach (i, ref v; tbl) v.num = i; return tbl; }
 
 enum src_table =
-[
+[   // used origin mask: # (black), - (white)
     Sym(   ` `,    ` `,   "00", bits!"##-##--##--"),
     Sym(   `!`,    `!`,   "01", bits!"##--##-##--"),
     Sym(   `"`,    `"`,   "02", bits!"##--##--##-"),

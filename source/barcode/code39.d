@@ -99,7 +99,8 @@ enum char[ushort] checkValInv = src_table.getDict!((i,a) => tuple(cast(ushort)i,
 struct Sym { char ch; ushort mask; }
 
 enum src_table =
-[
+[   // used flags of width lines and gaps: - (narow), # (wide)
+    // width controls by Code39.X and Code39.W
     Sym('-', bits!"---##-#--"),
     Sym('#', bits!"#--#----#"),
     Sym('2', bits!"--##----#"),
