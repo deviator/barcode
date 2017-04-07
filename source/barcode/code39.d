@@ -10,6 +10,7 @@ import std.array;
 import std.typecons : tuple;
 
 import barcode.iface;
+import barcode.util;
 
 ///
 class Code39 : BarCodeEncoder1D
@@ -91,110 +92,56 @@ protected:
 
 private:
 
-enum ushort[char] table = getDict!((i,a) => tuple(a.ch, a.mask))(src_data);
-enum ushort[char] checkVal = getDict!((i,a) => tuple(a.ch, i))(src_data);
-enum char[ushort] checkValInv = getDict!((i,a) => tuple(cast(ushort)i, a.ch))(src_data);
+enum ushort[char]       table = src_table.getDict!((i,a) => tuple(a.ch, a.mask));
+enum ushort[char]    checkVal = src_table.getDict!((i,a) => tuple(a.ch, i));
+enum char[ushort] checkValInv = src_table.getDict!((i,a) => tuple(cast(ushort)i, a.ch));
 
 struct Sym { char ch; ushort mask; }
 
-enum src_data =
+enum src_table =
 [
-    Sym('0', 0b000110100),
-    Sym('1', 0b100100001),
-    Sym('2', 0b001100001),
-    Sym('3', 0b101100000),
-    Sym('4', 0b000110001),
-    Sym('5', 0b100110000),
-    Sym('6', 0b001110000),
-    Sym('7', 0b000100101),
-    Sym('8', 0b100100100),
-    Sym('9', 0b001100100),
-    Sym('A', 0b100001001),
-    Sym('B', 0b001001001),
-    Sym('C', 0b101001000),
-    Sym('D', 0b000011001),
-    Sym('E', 0b100011000),
-    Sym('F', 0b001011000),
-    Sym('G', 0b000001101),
-    Sym('H', 0b100001100),
-    Sym('I', 0b001001100),
-    Sym('J', 0b000011100),
-    Sym('K', 0b100000011),
-    Sym('L', 0b001000011),
-    Sym('M', 0b101000010),
-    Sym('N', 0b000010011),
-    Sym('O', 0b100010010),
-    Sym('P', 0b001010010),
-    Sym('Q', 0b000000111),
-    Sym('R', 0b100000110),
-    Sym('S', 0b001000110),
-    Sym('T', 0b000010110),
-    Sym('U', 0b110000001),
-    Sym('V', 0b011000001),
-    Sym('W', 0b111000000),
-    Sym('X', 0b010010001),
-    Sym('Y', 0b110010000),
-    Sym('Z', 0b011010000),
-    Sym('-', 0b010000101),
-    Sym('.', 0b110000100),
-    Sym(' ', 0b011000100),
-    Sym('$', 0b010101000),
-    Sym('/', 0b010100010),
-    Sym('+', 0b010001010),
-    Sym('%', 0b000101010),
-    Sym('*', 0b010010100)
+    Sym('-', bits!"---##-#--"),
+    Sym('#', bits!"#--#----#"),
+    Sym('2', bits!"--##----#"),
+    Sym('3', bits!"#-##-----"),
+    Sym('4', bits!"---##---#"),
+    Sym('5', bits!"#--##----"),
+    Sym('6', bits!"--###----"),
+    Sym('7', bits!"---#--#-#"),
+    Sym('8', bits!"#--#--#--"),
+    Sym('9', bits!"--##--#--"),
+    Sym('A', bits!"#----#--#"),
+    Sym('B', bits!"--#--#--#"),
+    Sym('C', bits!"#-#--#---"),
+    Sym('D', bits!"----##--#"),
+    Sym('E', bits!"#---##---"),
+    Sym('F', bits!"--#-##---"),
+    Sym('G', bits!"-----##-#"),
+    Sym('H', bits!"#----##--"),
+    Sym('I', bits!"--#--##--"),
+    Sym('J', bits!"----###--"),
+    Sym('K', bits!"#------##"),
+    Sym('L', bits!"--#----##"),
+    Sym('M', bits!"#-#----#-"),
+    Sym('N', bits!"----#--##"),
+    Sym('O', bits!"#---#--#-"),
+    Sym('P', bits!"--#-#--#-"),
+    Sym('Q', bits!"------###"),
+    Sym('R', bits!"#-----##-"),
+    Sym('S', bits!"--#---##-"),
+    Sym('T', bits!"----#-##-"),
+    Sym('U', bits!"##------#"),
+    Sym('V', bits!"-##-----#"),
+    Sym('W', bits!"###------"),
+    Sym('X', bits!"-#--#---#"),
+    Sym('Y', bits!"##--#----"),
+    Sym('Z', bits!"-##-#----"),
+    Sym('-', bits!"-#----#-#"),
+    Sym('.', bits!"##----#--"),
+    Sym(' ', bits!"-##---#--"),
+    Sym('$', bits!"-#-#-#---"),
+    Sym('/', bits!"-#-#---#-"),
+    Sym('+', bits!"-#---#-#-"),
+    Sym('%', bits!"---#-#-#-"),
+    Sym('*', bits!"-#--#-#--")
 ];
-
-auto getDict(alias F, T)(T[] arr)
-{
-    alias frt = typeof(F(size_t(0), T.init));
-    alias KEY = typeof(frt.init[0]);
-    alias VAL = typeof(frt.init[1]);
-
-    VAL[KEY] ret;
-    foreach (i, e; arr)
-    {
-        auto tmp = F(i, e);
-        ret[tmp[0]] = tmp[1];
-    }
-    return ret;
-}
-
-unittest
-{
-    static struct X { char ch; ushort mask; }
-    enum data = [ X('0', 0b001), X('1', 0b010), X('2', 0b100), ];
-
-    {
-        enum ushort[char] t = getDict!((i,a) => tuple(a.ch, a.mask))(data);
-        static assert(t.keys.length == 3);
-        assert('0' in t);
-        assert(t['0'] == 0b001);
-        assert('1' in t);
-        assert(t['1'] == 0b010);
-        assert('2' in t);
-        assert(t['2'] == 0b100);
-    }
-
-    {
-        enum ushort[char] t = getDict!((i,a) => tuple(a.ch, i))(data);
-        static assert(t.keys.length == 3);
-        assert('0' in t);
-        assert(t['0'] == 0);
-        assert('1' in t);
-        assert(t['1'] == 1);
-        assert('2' in t);
-        assert(t['2'] == 2);
-    }
-
-    {
-        enum char[ubyte] t = getDict!((i,a) => tuple(cast(ubyte)i, a.ch))(data);
-        static assert(t.keys.length == 3);
-        assert(0 in t);
-        assert(t[0] == '0');
-        assert(1 in t);
-        assert(t[1] == '1');
-        assert(2 in t);
-        assert(t[2] == '2');
-    }
-}
