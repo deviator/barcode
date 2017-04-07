@@ -15,31 +15,179 @@ import barcode.util;
 ///
 class Code128 : BarCodeEncoder1D
 {
+    enum whiteSpace = bits!"----------";
     enum stopSymbol = bits!"##---###-#-##";
 
-    this(bool appendCheckSum=false)
+    this()
     {
-        this.appendCheckSum = appendCheckSum;
     }
-
-    bool appendCheckSum;
 
     override BitArray encode(string str)
     {
-        return BitArray([false]);
+        auto syms = parseStrToSymbol(str);
+        auto chsm = calcCheckSumm(syms);
+
+        BitArray ret;
+        ret.addBits(whiteSpace);
+
+        foreach (s; syms)
+            ret.addBits(s.mask);
+
+        ret.addBits(chsm.mask);
+        ret.addBits(stopSymbol);
+        ret.addBits(whiteSpace);
+        return ret;
     }
 }
 
 private:
 
+struct Sym
+{
+    size_t num;
+    string A, B, C;
+    Bits!ushort mask;
+
+    this(string a, string b, string c, Bits!ushort bts) pure
+    {
+        A = a;
+        B = b;
+        C = c;
+        mask = bts;
+    }
+}
+
 Sym symByNum(size_t num) { return src_table[num]; }
+
 Sym symByA(string str) { return src_table[sym_by_a[str]]; }
+Sym symByA(char ch) { return symByA("" ~ ch); }
+
 Sym symByB(string str) { return src_table[sym_by_b[str]]; }
+Sym symByB(char ch) { return symByB("" ~ ch); }
+
 Sym symByC(string str) { return src_table[sym_by_c[str]]; }
+Sym symByC(char ch) { return symByC("" ~ ch); }
 
 enum size_t[string] sym_by_a = src_table.getDict!((i,v) => tuple(v.A, i));
 enum size_t[string] sym_by_b = src_table.getDict!((i,v) => tuple(v.B, i));
 enum size_t[string] sym_by_c = src_table.getDict!((i,v) => tuple(v.C, i));
+
+Sym[] parseStrToSymbol(string str, int lastState=0)
+{
+    import std.algorithm;
+    import std.ascii;
+
+    enforce(0 <= lastState && lastState <= 3, "unknown last state");
+
+    Sym[] setA()
+    {
+        auto ret = [0: [symByA(StartA)],
+                    1: [/+ already in A mode +/],
+                    2: [symByB(CODE_A)],
+                    3: [symByC(CODE_A)]][lastState];
+        lastState = 1;
+        return ret;
+    }
+
+    Sym[] setB()
+    {
+        auto ret = [0: [symByA(StartB)],
+                    1: [symByA(CODE_B)],
+                    2: [/+ already in B mode +/],
+                    3: [symByC(CODE_B)]][lastState];
+        lastState = 2;
+        return ret;
+    }
+
+    Sym[] setC()
+    {
+        auto ret = [0: [symByA(StartC)],
+                    1: [symByA(CODE_C)],
+                    2: [symByB(CODE_C)],
+                    3: [/+ already in C +/]][lastState];
+        lastState = 3;
+        return ret;
+    }
+
+    if (str.length==1)
+    {
+        if (str.specACount)
+            return setA ~ symByA(str);
+        else
+            return setB ~ symByB(str);
+    }
+    else if (str.length==2)
+    {
+        if (str.digitsCount==2)
+            return setC ~ [symByC(str)];
+        else if (str.specACount)
+            return setA ~ [symByA(str[0]), symByA(str[1])];
+        else
+            return setB ~ [symByB(str[0]), symByB(str[1])];
+    }
+
+    Sym[] ret;
+
+    while (str.length)
+    {
+        if (str.digitsCount >= 4 && (lastState == 0 || str.digitsCount % 2))
+        {
+            ret ~= setC;
+            while (str.digitsCount >= 2)
+            {
+                ret ~= symByC(str[0..2]);
+                str = str[2..$];
+            }
+        }
+        // TODO: Гост ПРИЛОЖЕНИЕ Е, пункт 1c
+        else
+        {
+            ret ~= setB ~ symByB(str[0]);
+            str = str[1..$];
+        }
+    }
+
+    return ret;
+}
+
+unittest
+{
+    auto a = parseStrToSymbol("EIA50-1234-123456");
+    auto b = getSymbol(StartB, "E", "I", "A", "5", "0",
+                "-", CODE_C, "12", "34",
+                CODE_B, "-", CODE_C, "12", "34", "56");
+
+    import std.stdio;
+    import std.algorithm;
+    stderr.writeln(a.map!"a.num", "\n", b.map!"a.num");
+}
+
+size_t digitsCount(string str)
+{
+    import std.ascii;
+    foreach (i; 0 .. str.length)
+        if (!str[i].isDigit)
+            return i;
+    return str.length;
+}
+
+unittest
+{
+    assert("0123".digitsCount == 4);
+    assert("01ab23".digitsCount == 2);
+    assert("0431ab23".digitsCount == 4);
+    assert("ab0431ab23".digitsCount == 0);
+}
+
+size_t specACount(string str)
+{
+    import std.algorithm;
+    size_t ret;
+    foreach (i; 0 .. str.length)
+        if (SpecA.canFind(""~str[i]))
+            ret++;
+    return ret;
+}
 
 Sym calcCheckSumm(Sym[] symbol)
 {
@@ -55,10 +203,10 @@ Sym calcCheckSumm(Sym[] symbol)
 unittest
 {
     auto arr = [StartB, "A", "I", "M", CODE_C, "12", "34"];
-    assert(calcCheckSumm(getSymbols(arr)).num == 87);
+    assert(calcCheckSumm(getSymbol(arr)).num == 87);
 }
 
-Sym[] getSymbols(string[] arr...)
+Sym[] getSymbol(string[] arr...)
 {
     enum State { A,B,C }
     State curr;
@@ -97,21 +245,6 @@ Sym[] getSymbols(string[] arr...)
     }
 
     return ret;
-}
-
-struct Sym
-{
-    size_t num;
-    string A, B, C;
-    ushort mask;
-
-    this(string a, string b, string c, ushort bits) pure
-    {
-        A = a;
-        B = b;
-        C = c;
-        mask = bits;
-    }
 }
 
 auto setNum(Sym[] tbl) { foreach (i, ref v; tbl) v.num = i; return tbl; }
@@ -292,3 +425,11 @@ enum CODE_C = NUL ~ "!CODE_C";
 enum StartA = NUL ~ "!StartA";
 enum StartB = NUL ~ "!StartB";
 enum StartC = NUL ~ "!StartC";
+
+enum SpecA = [ NUL, SOH, STX, ETX, EOT, ENQ, ACK, BEL, BS, HT, LF, VT, FF,
+               CR, SO, SI, DLE, DC1, DC2, DC3, DC4, NAK, SYN, ETB, CAN,
+               EM, SUB, ESC, FS, GS, RS, US ];
+
+enum SpecB = ["`", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l",
+              "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y",
+              "z", "{", "|", "}", "~", DEL];

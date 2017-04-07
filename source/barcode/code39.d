@@ -25,7 +25,7 @@ protected:
 
 public:
 
-    this(bool appendCheckSum=false)
+    this(AppendCheckSum acs=AppendCheckSum.yes)
     {
         this.appendCheckSum = appendCheckSum;
 
@@ -39,7 +39,7 @@ public:
         bar[1][1] = BitArray(true.repeat(W).array);
     }
 
-    bool appendCheckSum;
+    AppendCheckSum appendCheckSum;
 
     override BitArray encode(string str)
     {
