@@ -9,11 +9,11 @@ import std.range;
 import std.array;
 import std.typecons : tuple;
 
-import barcode.iface;
+import barcode.types;
 import barcode.util;
 
 ///
-class Code39 : BarCodeEncoder1D
+class Code39 : BarCodeEncoder
 {
 protected:
 
@@ -41,7 +41,7 @@ public:
 
     AppendCheckSum appendCheckSum;
 
-    override BitArray encode(string str)
+    override BarCode encode(string str)
     {
         checkStr(str);
 
@@ -75,7 +75,7 @@ public:
         append('*'); // stop
 
         ret ~= whiteZone;
-        return ret;
+        return BarCode(ret.length, ret, "code39");
     }
 
 protected:

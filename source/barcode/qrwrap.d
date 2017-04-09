@@ -1,10 +1,10 @@
-module barcode.qriface;
+module barcode.qrwrap;
 
 import std.exception;
 import barcode.qr;
-import barcode.iface;
+import barcode.types;
 
-class Qr : BarCodeEncoder2D
+class Qr : BarCodeEncoder
 {
     ECL ecl;
     uint minVer, maxVer;
@@ -19,10 +19,10 @@ class Qr : BarCodeEncoder2D
         this.maxVer = maxVer;
     }
 
-    BarCode2D encode(string str)
+    BarCode encode(string str)
     {
         auto segs = QrSegment.makeSegments(str);
         auto qrcode = QrCode.encodeSegments(segs, ecl, minVer, maxVer, -1, true);
-        return BarCode2D(qrcode.size, qrcode.modules);
+        return BarCode(qrcode.size, qrcode.modules, "qrcode");
     }
 }

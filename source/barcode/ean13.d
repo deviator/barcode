@@ -11,10 +11,10 @@ import std.array;
 import std.typecons : tuple;
 import std.ascii;
 
-import barcode.iface;
+import barcode.types;
 
 ///
-class EAN13 : BarCodeEncoder1D
+class EAN13 : BarCodeEncoder
 {
 protected:
 
@@ -79,7 +79,7 @@ protected:
 
 public:
 
-    BitArray encode(string data)
+    override BarCode encode(string data)
     {
         enforce(data.length == DIGITS, format("length of data must be %s", DIGITS));
         enforce(data.all!isDigit);
@@ -115,6 +115,6 @@ public:
         append(lead_trailer);
         append(quiet_zone);
 
-        return ret;
+        return BarCode(ret.length, ret, "ean13");
     }
 }

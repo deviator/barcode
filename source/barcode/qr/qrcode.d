@@ -133,24 +133,6 @@ struct QrCode
     //void opIndexAssign(int value, int x, int y)
     //{ modules[crd(x,y)] = cast(bool)value; }
 
-    string toSvgString(int border, float cell=10) const
-    {
-        enforce(border > 0, "border must be non-negative");
-        string[] paths;
-
-        foreach (y; -border .. size + border)
-            foreach (x; -border .. size + border)
-                if (this[x,y]) paths ~= "M%s,%sh%sv%sh-%sz"
-                    .format((x+border)*cell, (y+border)*cell, cell, cell, cell);
-
-        return `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 %1$d %1$d">
-	<rect width="100%%" height="100%%" fill="#FFFFFF" stroke-width="0"/>
-	<path d="%2$s" fill="#000000" stroke-width="0"/>
-</svg>`.format(cast(long)((size + border * 2)*cell), paths.join(" "));
-    }
-
     void drawFunctionPatterns()
     {
         foreach (i; 0 .. size)

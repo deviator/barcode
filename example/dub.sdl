@@ -1,0 +1,3 @@
+name "gen"
+description "Generate svg barcodes"
+dependency "barcode" path="../"

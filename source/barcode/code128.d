@@ -9,18 +9,18 @@ import std.range;
 import std.array;
 import std.typecons : tuple;
 
-import barcode.iface;
+import barcode.types;
 import barcode.util;
 
 ///
-class Code128 : BarCodeEncoder1D
+class Code128 : BarCodeEncoder
 {
     enum whiteSpace = bits!"----------";
     enum stopSymbol = bits!"##---###-#-##";
 
     this() { }
 
-    override BitArray encode(string str)
+    override BarCode encode(string str)
     {
         auto syms = parseStrToSymbol(str);
         auto chsm = calcCheckSumm(syms);
@@ -34,7 +34,7 @@ class Code128 : BarCodeEncoder1D
         ret.addBits(chsm.mask);
         ret.addBits(stopSymbol);
         ret.addBits(whiteSpace);
-        return ret;
+        return BarCode(ret.length, ret, "code128");
     }
 }
 

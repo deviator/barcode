@@ -1,2 +1,0 @@
-name "qr"
-dependency "barcode" path="../../"

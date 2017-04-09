@@ -1,6 +1,6 @@
 name "barcode"
 targetType "sourceLibrary"
-description "Bar code generators (EAN13, CODE39, QrCode)"
+description "Bar code generators (EAN13, CODE39, CODE128, QrCode)"
 authors "Oleg Butko (deviator)"
 copyright "Copyright © 2017, deviator"
 license "MIT"

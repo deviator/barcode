@@ -1,5 +1,5 @@
 ### Barcode generators
 
-Implements some common bar codes: EAN13, CODE39, QrCode.
+Implements some common bar codes: EAN13, CODE39, CODE128, QrCode.
 
-See example for more information.
+See example: barcode svg generator.
