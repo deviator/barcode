@@ -48,10 +48,13 @@ int main(string[] args)
 
     auto f = File(output, "w");
 
-    float size = 400;
-    float hh = 40;
-    if (code == Code.qr) hh = size;
-    f.write(enc.encode(str).toSvgString(10,1,size,hh));
+    auto bbcsd = new BaseBarCodeSvgDrawer;
+    bbcsd.fixSizeMode = true;
+    bbcsd.W = 400;
+    bbcsd.H = 50;
+    if (code == Code.qr)
+        bbcsd.H = 400;
+    f.write(bbcsd.draw(enc.encode(str)));
 
     return 0;
 }
