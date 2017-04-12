@@ -15,29 +15,8 @@ import barcode.util;
 ///
 class Code39 : BarCodeEncoder
 {
-protected:
-
-    enum X = 1; /// narow
-    enum W = 3; /// wide
-
-    BitArray whiteZone, charSpace;
-    BitArray[2][2] bar;
-
 public:
-
-    this(AppendCheckSum acs=AppendCheckSum.yes)
-    {
-        this.appendCheckSum = appendCheckSum;
-
-        whiteZone = BitArray(false.repeat(10*X).array);
-        charSpace = BitArray(false.repeat(1*X).array);
-
-        bar[0][0] = BitArray(false.repeat(X).array);
-        bar[0][1] = BitArray(true.repeat(X).array);
-
-        bar[1][0] = BitArray(false.repeat(W).array);
-        bar[1][1] = BitArray(true.repeat(W).array);
-    }
+    this(AppendCheckSum acs=AppendCheckSum.no) { appendCheckSum = acs; }
 
     AppendCheckSum appendCheckSum;
 
@@ -47,15 +26,7 @@ public:
 
         BitArray ret;
 
-        void append(char ch)
-        {
-            auto w = table[ch];
-            foreach_reverse (i; 0 .. 9)
-                ret ~= bar[(w>>i)&1][(i+1)%2];
-            ret ~= charSpace;
-        }
-
-        ret ~= whiteZone;
+        void append(char ch) { ret.addBits(table[ch]); }
 
         append('*'); // start
 
@@ -74,7 +45,6 @@ public:
 
         append('*'); // stop
 
-        ret ~= whiteZone;
         return BarCode(ret.length, ret, "code39");
     }
 
@@ -92,57 +62,88 @@ protected:
 
 private:
 
-enum ushort[char]       table = src_table.getDict!((i,a) => tuple(a.ch, a.mask));
+Bits!uint drawMask()(auto ref const Bits!ushort mask)
+{
+    enum X = 1;
+    enum W = 3;
+
+    uint val;
+    uint cur = X;
+
+    foreach (i; 0 .. mask.count)
+    {
+        auto black = (i%2) == 0;
+        auto n = mask[i] ? W : X;
+        foreach (k; 0 .. n)
+            val |= black << cur++;
+    }
+
+    return Bits!uint(cur, val);
+}
+
+unittest
+{
+    auto v = drawMask(bitsStr!"--#--#-");
+    assert(v == bitsStr!"#-###-#---#-");
+}
+
+enum Bits!uint[char]   table = src_table.getDict!((i,a) => tuple(a.ch, drawMask(a.mask)));
 enum ushort[char]    checkVal = src_table.getDict!((i,a) => tuple(a.ch, i));
 enum char[ushort] checkValInv = src_table.getDict!((i,a) => tuple(cast(ushort)i, a.ch));
 
-struct Sym { char ch; ushort mask; }
+struct Sym { char ch; Bits!ushort mask; }
+
+unittest
+{
+    //                               W=3
+    assert(table['0'] == bitsStr!"#-#---###-###-#-");
+}
 
 enum src_table =
 [   // used flags of width lines and gaps: - (narow), # (wide)
-    // width controls by Code39.X and Code39.W
-    Sym('-', bits!"---##-#--"),
-    Sym('#', bits!"#--#----#"),
-    Sym('2', bits!"--##----#"),
-    Sym('3', bits!"#-##-----"),
-    Sym('4', bits!"---##---#"),
-    Sym('5', bits!"#--##----"),
-    Sym('6', bits!"--###----"),
-    Sym('7', bits!"---#--#-#"),
-    Sym('8', bits!"#--#--#--"),
-    Sym('9', bits!"--##--#--"),
-    Sym('A', bits!"#----#--#"),
-    Sym('B', bits!"--#--#--#"),
-    Sym('C', bits!"#-#--#---"),
-    Sym('D', bits!"----##--#"),
-    Sym('E', bits!"#---##---"),
-    Sym('F', bits!"--#-##---"),
-    Sym('G', bits!"-----##-#"),
-    Sym('H', bits!"#----##--"),
-    Sym('I', bits!"--#--##--"),
-    Sym('J', bits!"----###--"),
-    Sym('K', bits!"#------##"),
-    Sym('L', bits!"--#----##"),
-    Sym('M', bits!"#-#----#-"),
-    Sym('N', bits!"----#--##"),
-    Sym('O', bits!"#---#--#-"),
-    Sym('P', bits!"--#-#--#-"),
-    Sym('Q', bits!"------###"),
-    Sym('R', bits!"#-----##-"),
-    Sym('S', bits!"--#---##-"),
-    Sym('T', bits!"----#-##-"),
-    Sym('U', bits!"##------#"),
-    Sym('V', bits!"-##-----#"),
-    Sym('W', bits!"###------"),
-    Sym('X', bits!"-#--#---#"),
-    Sym('Y', bits!"##--#----"),
-    Sym('Z', bits!"-##-#----"),
-    Sym('-', bits!"-#----#-#"),
-    Sym('.', bits!"##----#--"),
-    Sym(' ', bits!"-##---#--"),
-    Sym('$', bits!"-#-#-#---"),
-    Sym('/', bits!"-#-#---#-"),
-    Sym('+', bits!"-#---#-#-"),
-    Sym('%', bits!"---#-#-#-"),
-    Sym('*', bits!"-#--#-#--")
+    // width controls in drawMask function (X and W enums)
+    Sym('0', bitsStr!"---##-#--"),
+    Sym('1', bitsStr!"#--#----#"),
+    Sym('2', bitsStr!"--##----#"),
+    Sym('3', bitsStr!"#-##-----"),
+    Sym('4', bitsStr!"---##---#"),
+    Sym('5', bitsStr!"#--##----"),
+    Sym('6', bitsStr!"--###----"),
+    Sym('7', bitsStr!"---#--#-#"),
+    Sym('8', bitsStr!"#--#--#--"),
+    Sym('9', bitsStr!"--##--#--"),
+    Sym('A', bitsStr!"#----#--#"),
+    Sym('B', bitsStr!"--#--#--#"),
+    Sym('C', bitsStr!"#-#--#---"),
+    Sym('D', bitsStr!"----##--#"),
+    Sym('E', bitsStr!"#---##---"),
+    Sym('F', bitsStr!"--#-##---"),
+    Sym('G', bitsStr!"-----##-#"),
+    Sym('H', bitsStr!"#----##--"),
+    Sym('I', bitsStr!"--#--##--"),
+    Sym('J', bitsStr!"----###--"),
+    Sym('K', bitsStr!"#------##"),
+    Sym('L', bitsStr!"--#----##"),
+    Sym('M', bitsStr!"#-#----#-"),
+    Sym('N', bitsStr!"----#--##"),
+    Sym('O', bitsStr!"#---#--#-"),
+    Sym('P', bitsStr!"--#-#--#-"),
+    Sym('Q', bitsStr!"------###"),
+    Sym('R', bitsStr!"#-----##-"),
+    Sym('S', bitsStr!"--#---##-"),
+    Sym('T', bitsStr!"----#-##-"),
+    Sym('U', bitsStr!"##------#"),
+    Sym('V', bitsStr!"-##-----#"),
+    Sym('W', bitsStr!"###------"),
+    Sym('X', bitsStr!"-#--#---#"),
+    Sym('Y', bitsStr!"##--#----"),
+    Sym('Z', bitsStr!"-##-#----"),
+    Sym('-', bitsStr!"-#----#-#"),
+    Sym('.', bitsStr!"##----#--"),
+    Sym(' ', bitsStr!"-##---#--"),
+    Sym('$', bitsStr!"-#-#-#---"),
+    Sym('/', bitsStr!"-#-#---#-"),
+    Sym('+', bitsStr!"-#---#-#-"),
+    Sym('%', bitsStr!"---#-#-#-"),
+    Sym('*', bitsStr!"-#--#-#--")
 ];

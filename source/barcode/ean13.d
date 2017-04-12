@@ -12,52 +12,52 @@ import std.typecons : tuple;
 import std.ascii;
 
 import barcode.types;
+import barcode.util;
 
 ///
 class EAN13 : BarCodeEncoder
 {
 protected:
 
-    enum ubyte[] quiet_zone = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-    enum ubyte[] lead_trailer = [1, 0, 1];
-    enum ubyte[] separator = [0, 1, 0, 1, 0];
+    enum lead_trailer = bitsStr!"#-#";
+    enum separator = bitsStr!"-#-#-";
 
-    enum ubyte[7][10][2] modules_AB = [[
-        [0, 0, 0, 1, 1, 0, 1],
-        [0, 0, 1, 1, 0, 0, 1],
-        [0, 0, 1, 0, 0, 1, 1],
-        [0, 1, 1, 1, 1, 0, 1],
-        [0, 1, 0, 0, 0, 1, 1],
-        [0, 1, 1, 0, 0, 0, 1],
-        [0, 1, 0, 1, 1, 1, 1],
-        [0, 1, 1, 1, 0, 1, 1],
-        [0, 1, 1, 0, 1, 1, 1],
-        [0, 0, 0, 1, 0, 1, 1]
+    enum Bits!ushort[10][2] modules_AB = [[
+        bitsStr!"---##-#",
+        bitsStr!"--##--#",
+        bitsStr!"--#--##",
+        bitsStr!"-####-#",
+        bitsStr!"-#---##",
+        bitsStr!"-##---#",
+        bitsStr!"-#-####",
+        bitsStr!"-###-##",
+        bitsStr!"-##-###",
+        bitsStr!"---#-##"
     ],
     [
-        [0, 1, 0, 0, 1, 1, 1],
-        [0, 1, 1, 0, 0, 1, 1],
-        [0, 0, 1, 1, 0, 1, 1],
-        [0, 1, 0, 0, 0, 0, 1],
-        [0, 0, 1, 1, 1, 0, 1],
-        [0, 1, 1, 1, 0, 0, 1],
-        [0, 0, 0, 0, 1, 0, 1],
-        [0, 0, 1, 0, 0, 0, 1],
-        [0, 0, 0, 1, 0, 0, 1],
-        [0, 0, 1, 0, 1, 1, 1]
+        bitsStr!"-#--###",
+        bitsStr!"-##--##",
+        bitsStr!"--##-##",
+        bitsStr!"-#----#",
+        bitsStr!"--###-#",
+        bitsStr!"-###--#",
+        bitsStr!"----#-#",
+        bitsStr!"--#---#",
+        bitsStr!"---#--#",
+        bitsStr!"--#-###"
     ]];
 
-    enum ubyte[7][10] modules_C = [
-        [1, 1, 1, 0, 0, 1, 0],
-        [1, 1, 0, 0, 1, 1, 0],
-        [1, 1, 0, 1, 1, 0, 0],
-        [1, 0, 0, 0, 0, 1, 0],
-        [1, 0, 1, 1, 1, 0, 0],
-        [1, 0, 0, 1, 1, 1, 0],
-        [1, 0, 1, 0, 0, 0, 0],
-        [1, 0, 0, 0, 1, 0, 0],
-        [1, 0, 0, 1, 0, 0, 0],
-        [1, 1, 1, 0, 1, 0, 0]
+    enum Bits!ushort[10] modules_C = [
+        bitsStr!"###--#-",
+        bitsStr!"##--##-",
+        bitsStr!"##-##--",
+        bitsStr!"#----#-",
+        bitsStr!"#-###--",
+        bitsStr!"#--###-",
+        bitsStr!"#-#----",
+        bitsStr!"#---#--",
+        bitsStr!"#--#---",
+        bitsStr!"###-#--"
     ];
 
     enum ubyte[6][10] parities = [
@@ -75,21 +75,19 @@ protected:
 
     enum MODULE = 7;
     enum DIGITS = 12;
-    enum WIDTH = quiet_zone.length * 2 + lead_trailer.length * 2 + separator.length + MODULE + DIGITS;
+    enum WIDTH = lead_trailer.count * 2 + separator.count + MODULE + DIGITS;
 
 public:
 
     override BarCode encode(string data)
     {
         enforce(data.length == DIGITS, format("length of data must be %s", DIGITS));
-        enforce(data.all!isDigit);
+        enforce(data.all!isDigit, "all symbols must be a numbers");
 
         BitArray ret;
 
         size_t idx(char ch) { return cast(size_t)ch - cast(size_t)'0'; }
-        void append(ubyte[] arr) { ret ~= BitArray(arr.map!(a => a != 0).array); }
-
-        append(quiet_zone);
+        void append(T)(Bits!T bb) { ret.addBits(bb); }
 
         append(lead_trailer);
 
@@ -104,16 +102,13 @@ public:
 
         auto pp = parities[checkSum];
 
-        foreach (i; 0 .. 6)
-            append(modules_AB[pp[i]][idx(data[i])]);
+        foreach (i; 0 .. 6) append(modules_AB[pp[i]][idx(data[i])]);
 
         append(separator);
 
-        foreach (i; 6 .. 12)
-            append(modules_C[idx(data[i])]);
+        foreach (i; 6 .. 12) append(modules_C[idx(data[i])]);
 
         append(lead_trailer);
-        append(quiet_zone);
 
         return BarCode(ret.length, ret, "ean13");
     }

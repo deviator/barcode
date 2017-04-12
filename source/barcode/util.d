@@ -25,20 +25,23 @@ struct Bits(T=ulong)
     alias value this;
 
 
-    pure nothrow @nogc
+pure nothrow @nogc:
+
     this(ulong cnt, ulong val)
     {
         count = cast(ubyte)cnt;
         value = cast(T)val;
     }
+
+    bool opIndex(size_t i) const
+    { return cast(bool)((value>>i)&1); }
 }
 
 void addBits(ref BitArray ba, size_t value, int bits)
 {
     enforce(bits <= size_t.sizeof*8, "so many bits");
     enforce(bits >= 0, "bits must be more that 0");
-    foreach_reverse (i; 0 .. bits)
-        ba ~= cast(bool)((value>>i)&1);
+    addBits(ba, Bits!ulong(bits, value));
 }
 
 unittest
@@ -50,17 +53,18 @@ unittest
 }
 
 void addBits(T)(ref BitArray ba, auto ref const(Bits!T) bits)
-{ ba.addBits(bits.value, bits.count); }
+{ foreach_reverse (i; 0 .. bits.count) ba ~= bits[i]; }
 
 unittest
 {
     BitArray ba;
-    ba.addBits(bits!"##---###-#-");
+    ba.addBits(bitsStr!"##---###-#-");
     auto tst = BitArray([1,1,0,0,0,1,1,1,0,1,0]);
     assert (ba == tst);
 }
 
-template bits(string mask, char ONE='#')
+// for more readable bits writing
+template bitsStr(string mask, char ONE='#')
     if (mask.length <= 58)
 {
     static pure auto bitsImpl(T)() nothrow @nogc
@@ -76,16 +80,16 @@ template bits(string mask, char ONE='#')
     else static if (mask.length < 28) alias S = uint;
     else                              alias S = ulong;
 
-    static if (mask.length >= 1) enum bits = bitsImpl!S();
+    static if (mask.length >= 1) enum bitsStr = bitsImpl!S();
     else static assert(0, "can't create 0 bits value");
 }
 
 unittest
 {
-    assert(1 == bits!"#");
-    assert(0 == bits!"-");
-    assert(0b1100011101011 == bits!"##---###-#-##");
-    assert(bits!"---".count == 3);
+    assert(1 == bitsStr!"#");
+    assert(0 == bitsStr!"-");
+    assert(0b1100011101011 == bitsStr!"##---###-#-##");
+    assert(bitsStr!"---".count == 3);
 }
 
 auto getDict(alias F, T)(T[] arr)
