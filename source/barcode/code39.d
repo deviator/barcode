@@ -15,7 +15,7 @@ import barcode.util;
 ///
 class Code39 : BarCodeEncoder
 {
-public:
+pure:
     this(AppendCheckSum acs=AppendCheckSum.no) { appendCheckSum = acs; }
 
     AppendCheckSum appendCheckSum;

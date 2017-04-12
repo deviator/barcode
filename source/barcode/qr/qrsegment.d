@@ -8,6 +8,7 @@ import barcode.qr.util;
 
 struct QrSegment
 {
+pure:
     static struct Mode
     {
         enum numeric = Mode(1, [10, 12, 14]),
@@ -18,6 +19,7 @@ struct QrSegment
         ubyte bits;
         private ubyte[3] cc;
 
+    pure:
         ubyte numCharCountBits(int ver) const
         {
                  if ( 1 <= ver && ver <=  9) return cc[0];

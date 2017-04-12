@@ -17,13 +17,8 @@ import barcode.qr.util;
 import barcode.qr.ecl;
 
 struct QrCode
-{
-    static QrCode encodeText(string text, ECL ecl)
-    {
-        auto segs = QrSegment.makeSegments(text);
-        return encodeSegments(segs, ecl);
-    }
-
+{ 
+pure:
     static QrCode encodeSegments(QrSegment[] segs, ECL ecl,
             int minVer=1, int maxVer=40, int mask=-1, bool boostecl=true)
     {
@@ -80,7 +75,7 @@ struct QrCode
     BitArray modules;
     BitArray isFunction;
 
-    size_t crd(int x, int y) const { return size * y + x; }
+    size_t crd(int x, int y) const nothrow { return size * y + x; }
 
     this(BitBuffer bb, int mask, uint vers, ECL ecl)
     {
@@ -122,16 +117,6 @@ struct QrCode
         applyMask(mask);
         this.mask = mask;
     }
-
-    bool opIndex(int x, int y) const
-    {
-        return (0 <= x && x < size &&
-                0 <= y && y < size &&
-                modules[crd(x,y)]) ? true : false;
-    }
-
-    //void opIndexAssign(int value, int x, int y)
-    //{ modules[crd(x,y)] = cast(bool)value; }
 
     void drawFunctionPatterns()
     {
@@ -312,14 +297,14 @@ struct QrCode
     }
 
     enum maskPatterns = [
-        (int x, int y) { return (x + y) % 2; },
-        (int x, int y) { return  y % 2; },
-        (int x, int y) { return  x % 3; },
-        (int x, int y) { return (x + y) % 3; },
-        (int x, int y) { return (x / 3 + y / 2) % 2; },
-        (int x, int y) { return  x * y % 2 + x * y % 3; },
-        (int x, int y) { return (x * y % 2 + x * y % 3) % 2; },
-        (int x, int y) { return ((x + y) % 2 + x * y % 3) % 2; }
+        (int x, int y) pure nothrow { return (x + y) % 2; },
+        (int x, int y) pure nothrow { return  y % 2; },
+        (int x, int y) pure nothrow { return  x % 3; },
+        (int x, int y) pure nothrow { return (x + y) % 3; },
+        (int x, int y) pure nothrow { return (x / 3 + y / 2) % 2; },
+        (int x, int y) pure nothrow { return  x * y % 2 + x * y % 3; },
+        (int x, int y) pure nothrow { return (x * y % 2 + x * y % 3) % 2; },
+        (int x, int y) pure nothrow { return ((x + y) % 2 + x * y % 3) % 2; }
     ];
 
     int getPenaltyScore()
@@ -396,7 +381,7 @@ struct QrCode
         }
 
         int black;
-        foreach (m; modules) if (m) black++;
+        foreach (i; 0..modules.length) if (modules[i]) black++;
         auto total = size*size;
 
         for (int k = 0; black*20 < (9-k)*total || black*20 > (11+k)*total; k++)
@@ -501,6 +486,7 @@ struct QrCode
 
     static struct ReadSolomonGenerator
     {
+    pure:
     private:
         ubyte[] coefficients;
 

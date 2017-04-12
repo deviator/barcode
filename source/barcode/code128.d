@@ -52,7 +52,7 @@ struct Sym
     }
 }
 
-Sym symByNum(size_t num) { return src_table[num]; }
+Sym symByNum(size_t num) pure { return src_table[num]; }
 
 Sym symByA(const(char)[] ch...) { return src_table[sym_by_a[ch.idup]]; }
 Sym symByB(const(char)[] ch...) { return src_table[sym_by_b[ch.idup]]; }
@@ -243,7 +243,7 @@ size_t specBCount(string str)
     return ret;
 }
 
-Sym calcCheckSumm(Sym[] symbol)
+Sym calcCheckSumm(Sym[] symbol) pure
 {
     enforce(symbol.length >= 1);
 

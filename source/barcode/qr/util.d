@@ -4,6 +4,7 @@ module barcode.qr.util;
 
 struct BitBuffer
 {
+pure:
     ubyte[] data;
     int length;
 

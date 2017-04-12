@@ -78,6 +78,7 @@ protected:
     enum WIDTH = lead_trailer.count * 2 + separator.count + MODULE + DIGITS;
 
 public:
+pure:
 
     override BarCode encode(string data)
     {
