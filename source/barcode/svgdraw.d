@@ -46,11 +46,27 @@ class BaseBarCodeSvgDrawer : BarCodeSvgDrawer
 
         string[] paths;
 
+        long start = -1;
+        float len = 0;
+
         foreach (long y; 0..bc.height)
             foreach (long x; 0..bc.width)
             {
-                if (bc[x,y]) paths ~= "M%s,%sh%sv%sh-%sz"
-                    .format((x)*cW+borderX, (y)*cH+borderY, cW, cH, cW);
+                if (bc[x,y])
+                {
+                    if (start == -1)
+                        start = x;
+                    len += cW;
+                }
+
+                if ((!bc[x,y] || x == bc.width-1) && start != -1)
+                {
+                    paths ~= "M%s,%sh%sv%sh-%sz"
+                        .format(start*cW+borderX,
+                                y*cH+borderY, len, cH, len);
+                    start = -1;
+                    len = 0;
+                }
             }
 
         long w = cast(long)(bc.width * cW + borderX * 2);
