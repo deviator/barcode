@@ -16,10 +16,13 @@ import barcode.util;
 class Code39 : BarCodeEncoder
 {
 pure:
+    ///
     this(AppendCheckSum acs=AppendCheckSum.no) { appendCheckSum = acs; }
 
+    ///
     AppendCheckSum appendCheckSum;
 
+    ///
     override BarCode encode(string str)
     {
         checkStr(str);
@@ -47,20 +50,18 @@ pure:
 
         return BarCode(ret.length, ret, "code39");
     }
-
-protected:
-
-    void checkStr(string str)
-    {
-        foreach (char c; str)
-        {
-            enforce(c != '*', "symbol '*' is not allowed in code39");
-            enforce(c in table, "symbol '" ~ c ~ "' is not allowed in code39");
-        }
-    }
 }
 
 private:
+
+void checkStr(string str) pure
+{
+    foreach (char c; str)
+    {
+        enforce(c != '*', "symbol '*' is not allowed in code39");
+        enforce(c in table, "symbol '" ~ c ~ "' is not allowed in code39");
+    }
+}
 
 Bits!uint drawMask()(auto ref const Bits!ushort mask)
 {
@@ -68,7 +69,7 @@ Bits!uint drawMask()(auto ref const Bits!ushort mask)
     enum W = 3;
 
     uint val;
-    uint cur = X;
+    uint cur = X; // past gap
 
     foreach (i; 0 .. mask.count)
     {
