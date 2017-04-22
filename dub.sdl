@@ -9,7 +9,7 @@ configuration "lib" {
 }
 
 configuration "test" {
-    targetName "barcode-test-library"
+    targetName "barcode-test-lib"
     targetType "executable"
     dflags "-main" "-unittest"
 }

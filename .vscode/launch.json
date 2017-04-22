@@ -5,7 +5,7 @@
             "name": "Debug",
             "type": "gdb",
             "request": "launch",
-            "target": "barcode-test-library",
+            "target": "barcode-test-lib",
             "cwd": "${workspaceRoot}"
         }
     ]
