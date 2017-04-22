@@ -1,65 +1,58 @@
+import std.algorithm;
 import std.stdio;
 import std.string;
 import std.getopt;
+import std.conv : text;
 
 import barcode;
 
-class ListEncoder : BarCodeEncoder
+enum listNames = ["Qr", "Code128", "Code39", "EAN13", "ITF"];
+
+int fail(string msg="", bool usage=true)
 {
-    BarCodeEncoder[] list;
-    size_t cur;
-
-    this(BarCodeEncoder[] lst...)
-    { list = lst; }
-
-    BarCode encode(string str)
-    { return list[cur++%$].encode(str); }
+    if (msg != "") stderr.writeln(msg);
+    if (usage) stderr.writefln("use: gen [-o<FILE>] %-(%s %) <STRING>", listNames.map!(a=>"[-"~a~"]"));
+    return 1;
 }
 
 int main(string[] args)
 {
-    if (args.length < 2)
-    {
-        import std.traits;
-        stderr.writefln("use: gen [-o<FILE>] [--qr] [--code128] [--code39] [--ean13] <STRING>");
-        return 1;
-    }
+    if (args.length < 2) return fail();
 
     string output = "output.svg";
-    bool useQr, useCode128, useCode39, useEAN13;
+    getopt(args, std.getopt.config.passThrough, "output|o", &output);
+    args = args[1..$]; // first is program name
 
-    getopt(args,
-            "output|o", &output,
-            "qr", &useQr,
-            "code128", &useCode128,
-            "code39", &useCode39,
-            "ean13", &useEAN13
-            );
+    BarCodeEncoder[string] list;
 
-    if (!(useQr || useCode128 || useCode39 || useEAN13))
-        useQr = true;
+    size_t nn;
 
-    string str = args[1..$].join(" ");
+    foreach (i, arg; args)
+    {
+        nn = i;
+        if (arg.startsWith("-"))
+        {
+            if(!listNames.canFind(arg[1..$]))
+                return fail(text("unkonwn arg: ", arg));
 
-    writeln("output: ", output);
-    writefln(" codes: Qr %s, Code128 %s, Code39 %s, EAN13 %s",
-                      useQr, useCode128, useCode39, useEAN13);
-    writeln("  data: ", str);
+            mixin (mix);
+        }
+        else break;
+    }
 
-    import barcode.qr : ECL;
-    auto enc = new ListEncoder(
-        (useQr ? cast(BarCodeEncoder[])[new Qr(ECL.high)] : []) ~
-        (useCode128 ? cast(BarCodeEncoder[])[new Code128] : []) ~
-        (useCode39 ? cast(BarCodeEncoder[])[new Code39] : []) ~
-        (useEAN13 ? cast(BarCodeEncoder[])[new EAN13] : [])
-    );
+    if (list.length == 0) list[listNames[0]] = mixin("new " ~ listNames[0]);
+
+    auto str = args[nn..$].join(" ");
+
+    writeln ("output: ", output);
+    writefln("   use: %-(%s, %)", list.keys);
+    writeln ("  data: ", str);
 
     auto bbcsd = new BaseBarCodeSvgDrawer;
     bbcsd.fixSizeMode = true;
     bbcsd.W = 400;
-    bbcsd.H = 50;
 
-    foreach (i; 0 .. enc.list.length)
+    foreach (enc; list.values)
     {
         auto bc = enc.encode(str);
         bbcsd.H = bc.type == "qrcode" ? 400 : 50;
@@ -68,4 +61,14 @@ int main(string[] args)
     }
 
     return 0;
+}
+
+string mix() pure
+{
+    string[] ret;
+
+    foreach (n; listNames)
+        ret ~= text(`if (arg[1..$] == "`, n, `") list["`, n, `"] = new `, n ,`;`);
+
+    return ret.join('\n');
 }
