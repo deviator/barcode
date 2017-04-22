@@ -9,6 +9,7 @@ public import std.bitmanip : BitArray;
 
 alias AppendCheckSum = Flag!"appendCheckSum";
 
+///
 struct Bits(T=ulong)
     if (is(T==ubyte) || is(T==ushort) || is(T==uint) || is(T==ulong))
 {
@@ -27,14 +28,32 @@ struct Bits(T=ulong)
 
 pure nothrow @nogc:
 
+    ///
     this(ulong cnt, ulong val)
     {
         count = cast(ubyte)cnt;
         value = cast(T)val;
     }
 
+    ///
     bool opIndex(size_t i) const
     { return cast(bool)((value>>i)&1); }
+
+    ///
+    bool opEquals(X)(auto ref const Bits!X v) const
+    { return v.value == value && v.count == count; }
+
+    ///
+    bool opEquals(X)(X v) const
+    if (!is(X : Bits!U, U))
+    { return v == value; }
+}
+
+unittest
+{
+    static assert(bitsStr!"---".count == 3);
+    static assert(bitsStr!"--".count == 2);
+    static assert(bitsStr!"---" != bitsStr!"--");
 }
 
 void addBits(ref BitArray ba, size_t value, int bits)
