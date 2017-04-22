@@ -10,7 +10,7 @@ pure:
     ECL ecl;
     uint minVer, maxVer;
 
-    this(ECL ecl=ECL.medium, uint minVer=1, uint maxVer=40)
+    this(ECL ecl=ECL.high, uint minVer=1, uint maxVer=40)
     {
         enforce(minVer >= 1 && minVer <= maxVer && maxVer <= 40,
                 "wrong min/max version");
