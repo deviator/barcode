@@ -129,10 +129,10 @@ Bits!ulong drawMask(T)(auto ref const Bits!T mask, bool bar=true)
 @system
 unittest
 {
-    immutable v1 = I2Of5.start.drawMask;
+    immutable v1 = ITF.start.drawMask;
     assert(v1 == bitsStr!"#-#-");
-    const v2 = I2Of5.stop.drawMask;
+    const v2 = ITF.stop.drawMask;
     assert(v2 == bitsStr!"###-#");
-    auto v3 = I2Of5.stop.drawMask(false);
+    auto v3 = ITF.stop.drawMask(false);
     assert(v3 == bitsStr!"---#-");
 }

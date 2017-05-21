@@ -49,8 +49,8 @@ class BaseBarCodeSvgDrawer : BarCodeSvgDrawer
         long start = -1;
         float len = 0;
 
-        foreach (long y; 0..bc.height)
-            foreach (long x; 0..bc.width)
+        foreach (size_t y; 0..bc.height)
+            foreach (size_t x; 0..bc.width)
             {
                 if (bc[x,y])
                 {

@@ -15,7 +15,7 @@ struct BarCode
     pure const
     {
         ///
-        bool opIndex(long x, long y)
+        bool opIndex(size_t x, size_t y)
         {
             if (0 <= x && x < width &&
                 0 <= y && y < height)
@@ -24,7 +24,7 @@ struct BarCode
         }
 
         ///
-        bool opIndex(long i)
+        bool opIndex(size_t i)
         {
             if (0 <= i && i < data.length)
                 return data[i];
