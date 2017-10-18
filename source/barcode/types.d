@@ -19,7 +19,7 @@ struct BarCode
         {
             if (0 <= x && x < width &&
                 0 <= y && y < height)
-                return data[y*width+x];
+                return data[cast(uint)(y*width+x)];
             return false;
         }
 
@@ -27,7 +27,7 @@ struct BarCode
         bool opIndex(size_t i)
         {
             if (0 <= i && i < data.length)
-                return data[i];
+                return data[cast(uint)i];
             return false;
         }
 
