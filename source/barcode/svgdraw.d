@@ -1,6 +1,9 @@
 ///
 module barcode.svgdraw;
 
+import std.string : format, join;
+import std.conv : text;
+
 import barcode.types;
 
 ///
@@ -27,15 +30,16 @@ class BaseBarCodeSvgDrawer : BarCodeSvgDrawer
     string fgColor = "#000000";
 
     ///
-    string draw(BarCode bc)
+    struct DrawData
     {
-        import std.string : format, join;
-        import std.conv : text;
+        ///
+        string svgpath;
+        ///
+        long w, h;
+    }
 
-        string bgStr;
-        if (withBackground)
-            bgStr = `<rect width="100%" height="100%" fill="`~bgColor~`" stroke-width="0"/>`;
-
+    DrawData buildPath(BarCode bc)
+    {
         auto cW = W, cH = H;
 
         if (fixSizeMode)
@@ -72,11 +76,52 @@ class BaseBarCodeSvgDrawer : BarCodeSvgDrawer
         long w = cast(long)(bc.width * cW + borderX * 2);
         long h = cast(long)(bc.height * cH + borderY * 2);
 
-        return text(`<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 `, w, " ", h, `">
-    `, bgStr, `
-    <path d="`, paths.join(" "), `" fill="`, fgColor, `" stroke-width="0"/>
-</svg>`);
+        return DrawData(paths.join(" "), w, h);
     }
+
+    ///
+    string draw(BarCode bc)
+    {
+        string bgStr;
+        if (withBackground)
+            bgStr = `<rect width="100%" height="100%" fill="`~bgColor~`" stroke-width="0"/>`;
+
+        auto dd = buildPath(bc);
+
+        return text(`
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+            <svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 `, dd.w, " ", dd.h, `">
+                `, bgStr, `
+                <path d="`, dd.svgpath, `" fill="`, fgColor, `" stroke-width="0"/>
+            </svg>`).flineOffset;
+    }
+}
+
+string flineOffset(string txt) @property
+{
+    import std.string;
+    string[] res;
+    ptrdiff_t offset = -1;
+    foreach (ln; txt.splitLines)
+    {
+        if (ln.strip.length == 0)
+        {
+            if(res.length) res ~= "";
+            continue;
+        }
+        if (offset == -1)
+            offset = ln.length - ln.stripLeft.length;
+        res ~= ln.stripRight[offset..$];
+    }
+    return res.join("\n");
+}
+
+unittest
+{
+    import std.string;
+    enum txt = "    \n            some  \n            text   \n  "~
+               "   \n                here   \n\n            end  ".flineOffset;
+    enum exp = "some\ntext\n\n    here\n\nend";
+    static assert(txt == exp);
 }
