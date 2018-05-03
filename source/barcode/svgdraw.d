@@ -98,30 +98,81 @@ class BaseBarCodeSvgDrawer : BarCodeSvgDrawer
     }
 }
 
+class PseudoRasterBarCodeSvgDrawer : BaseBarCodeSvgDrawer
+{
+    override DrawData buildPath(BarCode bc)
+    {
+        auto cW = W, cH = H;
+
+        if (fixSizeMode)
+        {
+            cW /= bc.width;
+            cH /= bc.height;
+        }
+
+        string[] paths;
+
+        long start = -1;
+        float len = 0;
+
+        foreach (size_t y; 0..bc.height)
+            foreach (size_t x; 0..bc.width)
+            {
+                if (bc[x,y])
+                    paths ~= "M%s,%sh%sv%sh-%sz"
+                        .format(x*cW+borderX, y*cH+borderY, cW, cH, cW);
+            }
+
+        long w = cast(long)(bc.width * cW + borderX * 2);
+        long h = cast(long)(bc.height * cH + borderY * 2);
+
+        return DrawData(paths.join(" "), w, h);
+    }
+}
+
 string flineOffset(string txt) @property
 {
     import std.string;
+    import std.algorithm;
     string[] res;
     ptrdiff_t offset = -1;
-    foreach (ln; txt.splitLines)
+    foreach (ln; txt.splitLines.map!(a=>a.stripRight))
     {
-        if (ln.strip.length == 0)
+        // skip empty lines
+        auto sln = ln.strip;
+        if (sln.length == 0)
         {
-            if(res.length) res ~= "";
+            if (res.length) res ~= "";
             continue;
         }
+
         if (offset == -1)
-            offset = ln.length - ln.stripLeft.length;
-        res ~= ln.stripRight[offset..$];
+            offset = ln.length - sln.length;
+
+        res ~= ln[min(offset, ln.length - sln.length)..$];
     }
     return res.join("\n");
 }
 
 unittest
 {
-    import std.string;
-    enum txt = "    \n            some  \n            text   \n  "~
-               "   \n                here   \n\n            end  ".flineOffset;
+    enum txt = ("    \n            some  \n            text   \n  "~
+                 "   \n                here   \n\n            end  ").flineOffset;
     enum exp = "some\ntext\n\n    here\n\nend";
+
+    static assert(txt == exp);
+}
+
+unittest
+{
+    enum txt = `
+    some text
+   with
+  wrong formated
+      lines`.flineOffset;
+    enum exp = "some text\n" ~
+               "with\n" ~
+               "wrong formated\n" ~
+               "  lines";
     static assert(txt == exp);
 }
