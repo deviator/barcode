@@ -2,12 +2,6 @@ platform: x64
 environment:
  matrix:
   - DC: dmd
-    DVersion: nightly
-    arch: x64
-  - DC: dmd
-    DVersion: nightly
-    arch: x86
-  - DC: dmd
     DVersion: beta
     arch: x64
   - DC: dmd
@@ -48,8 +42,6 @@ install:
                 $latest = (Invoke-WebRequest "http://downloads.dlang.org/pre-releases/LATEST").toString();
                 $latestVersion = $latest.split("-")[0].split("~")[0];
                 $url = "http://downloads.dlang.org/pre-releases/2.x/$($latestVersion)/dmd.$($latest).windows.7z";
-            }elseif($version -eq "nightly") {
-                $url = "http://nightlies.dlang.org/dmd-master-2017-05-20/dmd.master.windows.7z"
             }else {
                 $url = "http://downloads.dlang.org/releases/2.x/$($version)/dmd.$($version).windows.7z";
             }
