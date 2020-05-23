@@ -82,6 +82,7 @@ Bits!uint drawMask()(auto ref const Bits!ushort mask)
     return Bits!uint(cur, val);
 }
 
+@safe
 unittest
 {
     auto v = drawMask(bitsStr!"--#--#-");
@@ -94,6 +95,7 @@ enum char[ushort] checkValInv = src_table.getDict!((i,a) => tuple(cast(ushort)i,
 
 struct Sym { char ch; Bits!ushort mask; }
 
+@safe
 unittest
 {
     //                               W=3

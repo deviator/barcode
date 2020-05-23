@@ -81,6 +81,7 @@ Bits!ulong combine(A, B)(auto ref const Bits!A a, auto ref const Bits!B b)
     return Bits!ulong(a.count*2, val);
 }
 
+@safe
 unittest
 {
     assert (combine(bitsStr!"##", bitsStr!"--") == bitsStr!"#-#-");
@@ -102,6 +103,7 @@ ubyte checkSum(ubyte[] data) pure @safe
     return (10 - (a+b)%10)%10;
 }
 
+@safe
 unittest
 {
     assert(checkSum("1937".map!(a=>cast(ubyte)(a-'0')).array) == 8);
@@ -126,7 +128,7 @@ Bits!ulong drawMask(T)(auto ref const Bits!T mask, bool bar=true)
     return Bits!ulong(cur, val);
 }
 
-@system
+@safe
 unittest
 {
     immutable v1 = ITF.start.drawMask;

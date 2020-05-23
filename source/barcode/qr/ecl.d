@@ -18,6 +18,7 @@ struct ECL
 }
 
 ///
+@safe
 unittest
 {
     auto ecl = ECL.medium;

@@ -64,6 +64,7 @@ void addBits(ref BitArray ba, size_t value, int bits) @safe pure
     addBits(ba, Bits!ulong(bits, value));
 }
 
+@trusted // BitArray
 unittest
 {
     BitArray ba;
@@ -75,6 +76,7 @@ unittest
 void addBits(T)(ref BitArray ba, auto ref const(Bits!T) bits) @trusted pure
 { foreach_reverse (i; 0 .. bits.count) ba ~= bits[i]; }
 
+@trusted // BitArray
 unittest
 {
     BitArray ba;

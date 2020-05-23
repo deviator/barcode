@@ -45,6 +45,7 @@ pure @safe:
     }
 }
 
+@safe
 unittest
 {
     BitBuffer arr;

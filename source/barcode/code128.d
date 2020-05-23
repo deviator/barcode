@@ -58,6 +58,7 @@ Sym symByA(const(char)[] ch...) @safe { return src_table[sym_by_a[ch.idup]]; }
 Sym symByB(const(char)[] ch...) @safe { return src_table[sym_by_b[ch.idup]]; }
 Sym symByC(const(char)[] ch...) @safe { return src_table[sym_by_c[ch.idup]]; }
 
+@safe
 unittest
 {
     assert(symByA("E") == symByB("E"));
@@ -179,6 +180,7 @@ Sym[] parseStrToSymbol(string str, int state=0) @safe
     return ret;
 }
 
+@safe
 unittest
 {
     import std.algorithm : equal;
@@ -215,6 +217,7 @@ size_t digitsSequenceCount(string str) @safe pure nothrow @nogc
     return str.length;
 }
 
+@safe
 unittest
 {
     assert("0123".digitsSequenceCount == 4);
@@ -254,13 +257,14 @@ Sym calcCheckSumm(Sym[] symbol) pure @safe
     return symByNum(tmp);
 }
 
+@safe
 unittest
 {
     auto arr = [StartB, "A", "I", "M", CODE_C, "12", "34"];
     assert(calcCheckSumm(getSymbol(arr)).num == 87);
 }
 
-Sym[] getSymbol(string[] arr...)
+Sym[] getSymbol(string[] arr...) @safe
 {
     enum State { A,B,C }
     State curr;
@@ -415,6 +419,7 @@ enum src_table =
     Sym(StartC, StartC, StartC, bitsStr!"##-#--###--"),
 ].setNum;
 
+@safe
 unittest
 {
     assert(symByB(StartB).num == 104);
