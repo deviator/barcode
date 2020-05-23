@@ -18,7 +18,7 @@ import barcode.qr.ecl;
 
 struct QrCode
 { 
-pure:
+pure @safe:
     static QrCode encodeSegments(QrSegment[] segs, ECL ecl,
             int minVer=1, int maxVer=40, int mask=-1, bool boostecl=true)
     {
@@ -77,7 +77,7 @@ pure:
 
     size_t crd(int x, int y) const nothrow { return size * y + x; }
 
-    this(BitBuffer bb, int mask, uint vers, ECL ecl)
+    this(BitBuffer bb, int mask, uint vers, ECL ecl) @trusted
     {
         enforce(-1 <= mask && mask <= 7, "unknown mask");
         enforce(1 <= vers && vers <= 40, "unknown vers");
@@ -214,7 +214,7 @@ pure:
                 setFunctionModule(x+j, y+i, max(abs(i), abs(j)) != 1);
     }
 
-    void setFunctionModule(int x, int y, bool isBlack)
+    void setFunctionModule(int x, int y, bool isBlack) @trusted
     {
         modules[crd(x,y)] = isBlack;
         isFunction[crd(x,y)] = true;
@@ -260,7 +260,7 @@ pure:
         return res;
     }
 
-    void drawCodewords(const(ubyte)[] data)
+    void drawCodewords(const(ubyte)[] data) @trusted
     {
         size_t i = 0;
         for (int right = size - 1; right >= 1; right -= 2)
@@ -284,7 +284,7 @@ pure:
         assert (i == data.length*8);
     }
 
-    void applyMask(int mask)
+    void applyMask(int mask) @trusted
     {
         enforce(0 <= mask && mask <= 7, new Exception("unknown mask"));
 
@@ -297,17 +297,17 @@ pure:
     }
 
     enum maskPatterns = [
-        (int x, int y) pure nothrow { return (x + y) % 2; },
-        (int x, int y) pure nothrow { return  y % 2; },
-        (int x, int y) pure nothrow { return  x % 3; },
-        (int x, int y) pure nothrow { return (x + y) % 3; },
-        (int x, int y) pure nothrow { return (x / 3 + y / 2) % 2; },
-        (int x, int y) pure nothrow { return  x * y % 2 + x * y % 3; },
-        (int x, int y) pure nothrow { return (x * y % 2 + x * y % 3) % 2; },
-        (int x, int y) pure nothrow { return ((x + y) % 2 + x * y % 3) % 2; }
+        (int x, int y) @safe @nogc pure nothrow { return (x + y) % 2; },
+        (int x, int y) @safe @nogc pure nothrow { return  y % 2; },
+        (int x, int y) @safe @nogc pure nothrow { return  x % 3; },
+        (int x, int y) @safe @nogc pure nothrow { return (x + y) % 3; },
+        (int x, int y) @safe @nogc pure nothrow { return (x / 3 + y / 2) % 2; },
+        (int x, int y) @safe @nogc pure nothrow { return  x * y % 2 + x * y % 3; },
+        (int x, int y) @safe @nogc pure nothrow { return (x * y % 2 + x * y % 3) % 2; },
+        (int x, int y) @safe @nogc pure nothrow { return ((x + y) % 2 + x * y % 3) % 2; }
     ];
 
-    int getPenaltyScore()
+    int getPenaltyScore() @trusted
     {
         int res;
 

@@ -88,7 +88,7 @@ unittest
     assert (combine(bitsStr!"#", bitsStr!"-") == bitsStr!"#-");
 }
 
-ubyte checkSum(ubyte[] data) pure
+ubyte checkSum(ubyte[] data) pure @safe
 {
     uint a, b;
 

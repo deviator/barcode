@@ -130,7 +130,7 @@ class PseudoRasterBarCodeSvgDrawer : BaseBarCodeSvgDrawer
     }
 }
 
-string flineOffset(string txt) @property
+string flineOffset(string txt) @property @safe
 {
     import std.string;
     import std.algorithm;
@@ -154,6 +154,7 @@ string flineOffset(string txt) @property
     return res.join("\n");
 }
 
+@safe
 unittest
 {
     enum txt = ("    \n            some  \n            text   \n  "~
@@ -163,6 +164,7 @@ unittest
     static assert(txt == exp);
 }
 
+@safe
 unittest
 {
     enum txt = `

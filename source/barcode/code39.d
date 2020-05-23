@@ -54,7 +54,7 @@ pure:
 
 private:
 
-void checkStr(string str) pure
+void checkStr(string str) pure @safe
 {
     foreach (char c; str)
     {

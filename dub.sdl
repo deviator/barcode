@@ -1,15 +1,7 @@
 name "barcode"
 description "Bar code generators (EAN13, CODE39, CODE128, QrCode)"
 authors "Oleg Butko (deviator)"
-copyright "Copyright © 2017, deviator"
+copyright "Copyright © 2017, 2018, 2020, deviator"
 license "MIT"
 
-configuration "lib" {
-    targetType "library"
-}
-
-configuration "test" {
-    targetName "barcode-test-lib"
-    targetType "executable"
-    dflags "-main" "-unittest"
-}
+targetType "library"

@@ -26,7 +26,7 @@ struct Bits(T=ulong)
     alias value this;
 
 
-pure nothrow @nogc:
+pure nothrow @nogc @safe:
 
     ///
     this(ulong cnt, ulong val)
@@ -49,6 +49,7 @@ pure nothrow @nogc:
     { return v == value; }
 }
 
+@safe
 unittest
 {
     static assert(bitsStr!"---".count == 3);
@@ -56,7 +57,7 @@ unittest
     static assert(bitsStr!"---" != bitsStr!"--");
 }
 
-void addBits(ref BitArray ba, size_t value, int bits)
+void addBits(ref BitArray ba, size_t value, int bits) @safe pure
 {
     enforce(bits <= size_t.sizeof*8, "so many bits");
     enforce(bits >= 0, "bits must be more that 0");
@@ -67,11 +68,11 @@ unittest
 {
     BitArray ba;
     ba.addBits(0b11000111010, 11);
-    auto tst = BitArray([1,1,0,0,0,1,1,1,0,1,0]);
+    const tst = BitArray([1,1,0,0,0,1,1,1,0,1,0]);
     assert (ba == tst);
 }
 
-void addBits(T)(ref BitArray ba, auto ref const(Bits!T) bits)
+void addBits(T)(ref BitArray ba, auto ref const(Bits!T) bits) @trusted pure
 { foreach_reverse (i; 0 .. bits.count) ba ~= bits[i]; }
 
 unittest
@@ -103,6 +104,7 @@ template bitsStr(string mask, char ONE='#')
     else static assert(0, "can't create 0 bits value");
 }
 
+@safe
 unittest
 {
     assert(1 == bitsStr!"#");
@@ -126,6 +128,7 @@ auto getDict(alias F, T)(T[] arr)
     return ret;
 }
 
+@safe
 unittest
 {
     static struct X { char ch; ushort mask; }

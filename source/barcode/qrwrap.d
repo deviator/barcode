@@ -6,9 +6,10 @@ import barcode.types;
 
 class Qr : BarCodeEncoder
 {
-pure:
     ECL ecl;
     uint minVer, maxVer;
+
+pure @safe:
 
     this(ECL ecl=ECL.high, uint minVer=1, uint maxVer=40)
     {

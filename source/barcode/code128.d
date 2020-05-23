@@ -52,11 +52,11 @@ struct Sym
     }
 }
 
-Sym symByNum(size_t num) pure { return src_table[num]; }
+Sym symByNum(size_t num) pure @safe { return src_table[num]; }
 
-Sym symByA(const(char)[] ch...) { return src_table[sym_by_a[ch.idup]]; }
-Sym symByB(const(char)[] ch...) { return src_table[sym_by_b[ch.idup]]; }
-Sym symByC(const(char)[] ch...) { return src_table[sym_by_c[ch.idup]]; }
+Sym symByA(const(char)[] ch...) @safe { return src_table[sym_by_a[ch.idup]]; }
+Sym symByB(const(char)[] ch...) @safe { return src_table[sym_by_b[ch.idup]]; }
+Sym symByC(const(char)[] ch...) @safe { return src_table[sym_by_c[ch.idup]]; }
 
 unittest
 {
@@ -69,7 +69,7 @@ enum size_t[string] sym_by_a = src_table.getDict!((i,v) => tuple(v.A, i));
 enum size_t[string] sym_by_b = src_table.getDict!((i,v) => tuple(v.B, i));
 enum size_t[string] sym_by_c = src_table.getDict!((i,v) => tuple(v.C, i));
 
-Sym[] parseStrToSymbol(string str, int state=0)
+Sym[] parseStrToSymbol(string str, int state=0) @safe
 {
     import std.algorithm;
     import std.ascii;
@@ -96,7 +96,7 @@ Sym[] parseStrToSymbol(string str, int state=0)
         return ret;
     }
 
-    Sym[] setC()
+    Sym[] setC() @safe
     {
         auto ret = [0: [symByA(StartC)],
                     1: [symByA(CODE_C)],
@@ -106,34 +106,34 @@ Sym[] parseStrToSymbol(string str, int state=0)
         return ret;
     }
 
-    Sym[] encA(const(char)[] ch...) { return setA ~ symByA(ch); }
-    Sym[] encB(const(char)[] ch...) { return setB ~ symByB(ch); }
-    Sym[] encC(const(char)[] ch...) { return setC ~ symByC(ch); }
+    Sym[] encA(const(char)[] ch...) @safe { return setA ~ symByA(ch); }
+    Sym[] encB(const(char)[] ch...) @safe { return setB ~ symByB(ch); }
+    Sym[] encC(const(char)[] ch...) @safe { return setC ~ symByC(ch); }
 
-    Sym[] encState(const(char)[] ch...)
+    Sym[] encState(const(char)[] ch...) @safe
     {
         if (state == 1) return [symByA(ch)];
         else return setB ~ symByB(ch);
     }
 
-    Sym[] encShift(const(char)[] ch...)
+    Sym[] encShift(const(char)[] ch...) @safe
     {
              if (state == 1) return [symByA(Shift)] ~ symByB(ch);
         else if (state == 2) return [symByB(Shift)] ~ symByA(ch);
         else assert(0, "logic error in code");
     }
 
-    Sym[] encSwitch(const(char)[] ch...)
+    Sym[] encSwitch(const(char)[] ch...) @safe
     { return [1: encB(ch), 2: encA(ch)][state]; }
 
-    bool isOtherSpec(const(char)[] ch...)
+    bool isOtherSpec(const(char)[] ch...) @safe
     {
              if (state == 1) return SpecB.canFind(ch);
         else if (state == 2) return SpecA.canFind(ch);
         else return false;
     }
 
-    bool isSpec(const(char)[] ch...)
+    bool isSpec(const(char)[] ch...) @safe
     {
              if (state == 1) return SpecA.canFind(ch);
         else if (state == 2) return SpecB.canFind(ch);
@@ -206,7 +206,7 @@ unittest
     }
 }
 
-size_t digitsSequenceCount(string str)
+size_t digitsSequenceCount(string str) @safe pure nothrow @nogc
 {
     import std.ascii;
     foreach (i; 0 .. str.length)
@@ -223,7 +223,7 @@ unittest
     assert("ab0431ab23".digitsSequenceCount == 0);
 }
 
-size_t specACount(string str)
+size_t specACount(string str) @safe
 {
     import std.algorithm;
     size_t ret;
@@ -233,7 +233,7 @@ size_t specACount(string str)
     return ret;
 }
 
-size_t specBCount(string str)
+size_t specBCount(string str) @safe
 {
     import std.algorithm;
     size_t ret;
@@ -243,7 +243,7 @@ size_t specBCount(string str)
     return ret;
 }
 
-Sym calcCheckSumm(Sym[] symbol) pure
+Sym calcCheckSumm(Sym[] symbol) pure @safe
 {
     enforce(symbol.length >= 1);
 

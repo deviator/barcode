@@ -8,7 +8,7 @@ import barcode.qr.util;
 
 struct QrSegment
 {
-pure:
+pure @safe:
     static struct Mode
     {
         enum numeric = Mode(1, [10, 12, 14]),
@@ -19,7 +19,7 @@ pure:
         ubyte bits;
         private ubyte[3] cc;
 
-    pure:
+    pure @safe:
         ubyte numCharCountBits(int ver) const
         {
                  if ( 1 <= ver && ver <=  9) return cc[0];
@@ -39,7 +39,7 @@ pure:
 
     static QrSegment makeNumeric(string digits)
     {
-	BitBuffer bb;
+        BitBuffer bb;
         int accumData = 0;
         int accumCount = 0;
         int charCount = 0;
@@ -65,33 +65,33 @@ pure:
 
     static QrSegment makeAlphanumeric(string text)
     {
-	BitBuffer bb;
-	int accumData = 0;
-	int accumCount = 0;
-	int charCount = 0;
-        foreach (char c; text)
-        {
-            if (c < ' ' || c > 'Z')
-                throw new Exception("String contains unencodable " ~
-                                     "characters in alphanumeric mode");
-            accumData = accumData * 45 + encodingTable[c - ' '];
-            accumCount++;
-            if (accumCount == 2)
+        BitBuffer bb;
+        int accumData = 0;
+        int accumCount = 0;
+        int charCount = 0;
+            foreach (char c; text)
             {
-                bb.appendBits(accumData, 11);
-                accumData = 0;
-                accumCount = 0;
-            }
-            charCount++;
-	}
-	if (accumCount > 0)  // 1 character remaining
-            bb.appendBits(accumData, 6);
-	return QrSegment(Mode.alphanumeric, charCount, bb.getBytes, cast(int)bb.length);
+                if (c < ' ' || c > 'Z')
+                    throw new Exception("String contains unencodable " ~
+                                        "characters in alphanumeric mode");
+                accumData = accumData * 45 + encodingTable[c - ' '];
+                accumCount++;
+                if (accumCount == 2)
+                {
+                    bb.appendBits(accumData, 11);
+                    accumData = 0;
+                    accumCount = 0;
+                }
+                charCount++;
+        }
+        if (accumCount > 0)  // 1 character remaining
+                bb.appendBits(accumData, 6);
+        return QrSegment(Mode.alphanumeric, charCount, bb.getBytes, cast(int)bb.length);
     }
 
     static QrSegment[] makeSegments(string text)
     {
-	// Select the most efficient segment encoding automatically
+        // Select the most efficient segment encoding automatically
         if (text.length == 0) return [];
         else if (QrSegment.isNumeric(text))
             return [QrSegment.makeNumeric(text)];
@@ -120,7 +120,7 @@ pure:
     static int getTotalBits(const(QrSegment)[] segs, int vers)
     {
         enforce(1 <= vers && vers <= 40, "unknown vers");
-	int result = 0;
+        int result = 0;
         foreach (seg; segs)
         {
             int ccbits = seg.mode.numCharCountBits(vers);
@@ -128,7 +128,7 @@ pure:
                 return -1;
             result += 4 + ccbits + seg.bitLength;
         }
-	return result;
+        return result;
     }
 
 private:

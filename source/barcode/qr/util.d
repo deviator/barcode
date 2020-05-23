@@ -4,12 +4,12 @@ module barcode.qr.util;
 
 struct BitBuffer
 {
-pure:
     ubyte[] data;
     int length;
 
     alias getBytes = data;
 
+pure @safe:
     void appendBits(long val, int len)
     {
         auto nlen = length + len;
