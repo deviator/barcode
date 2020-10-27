@@ -1,3 +1,6 @@
 .dub
 *-test-lib*
 dub.selections.json
+
+# Compiled Static libraries
+*.a
